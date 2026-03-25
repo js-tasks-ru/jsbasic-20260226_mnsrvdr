@@ -1,3 +1,0 @@
-function hideSelf() {
-  // ваш код...
-}
