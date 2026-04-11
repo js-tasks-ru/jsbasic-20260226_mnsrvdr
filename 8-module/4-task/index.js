@@ -8,7 +8,6 @@ export default class Cart {
 
   constructor(cartIcon) {
     this.cartIcon = cartIcon;
-
     this.addEventListeners();
   }
 
@@ -46,6 +45,12 @@ export default class Cart {
       this.cartItems = this.cartItems.filter(
         item => item.product.id !== productId
       );
+
+      if (this.isEmpty()) {
+        this.onProductUpdate(null);
+        return;
+      }
+
       this.onProductUpdate(null);
       return;
     }
@@ -71,9 +76,37 @@ export default class Cart {
   onProductUpdate(cartItem) {
     this.cartIcon.update(this);
 
-    if (document.body.classList.contains('is-modal-open')) {
-      this.renderModal();
+    if (!document.body.classList.contains('is-modal-open')) return;
+
+    if (this.isEmpty()) {
+      if (this.modal) {
+        this.modal.close();
+      }
+      return;
     }
+
+    if (!cartItem) {
+      return;
+    }
+
+    const productId = cartItem.product.id;
+
+    const productCount = this.modalBody.querySelector(
+      `[data-product-id="${productId}"] .cart-counter__count`
+    );
+
+    const productPrice = this.modalBody.querySelector(
+      `[data-product-id="${productId}"] .cart-product__price`
+    );
+
+    const infoPrice = this.modalBody.querySelector(
+      `.cart-buttons__info-price`
+    );
+
+    productCount.innerHTML = cartItem.count;
+    productPrice.innerHTML =
+      `€${(cartItem.product.price * cartItem.count).toFixed(2)}`;
+    infoPrice.innerHTML = `€${this.getTotalPrice().toFixed(2)}`;
   }
 
   renderProduct(product, count) {
@@ -183,35 +216,6 @@ export default class Cart {
     form.addEventListener('submit', (event) => this.onSubmit(event));
   }
 
-  onProductUpdate(cartItem) {
-    this.cartIcon.update(this);
-
-    if (!document.body.classList.contains('is-modal-open')) return;
-
-    if (!cartItem) {
-      this.modal.close();
-      return;
-    }
-
-    const productId = cartItem.product.id;
-
-    const productCount = this.modalBody.querySelector(
-      `[data-product-id="${productId}"] .cart-counter__count`
-    );
-
-    const productPrice = this.modalBody.querySelector(
-      `[data-product-id="${productId}"] .cart-product__price`
-    );
-
-    const infoPrice = this.modalBody.querySelector(
-      `.cart-buttons__info-price`
-    );
-
-    productCount.innerHTML = cartItem.count;
-    productPrice.innerHTML = `€${(cartItem.product.price * cartItem.count).toFixed(2)}`;
-    infoPrice.innerHTML = `€${this.getTotalPrice().toFixed(2)}`;
-  }
-
   async onSubmit(event) {
     event.preventDefault();
 
@@ -241,6 +245,7 @@ export default class Cart {
       `));
 
       this.cartIcon.update(this);
+
     } finally {
       submitButton.classList.remove('is-loading');
     }
