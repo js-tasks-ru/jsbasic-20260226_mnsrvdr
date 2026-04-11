@@ -1,4 +1,4 @@
-export default function initCarousel() {
+export function initCarousel() {
   const root = document.querySelector('.carousel');
 
   if (!root) return;
@@ -7,22 +7,29 @@ export default function initCarousel() {
   const prevBtn = root.querySelector('.carousel__arrow_left');
   const inner = root.querySelector('.carousel__inner');
 
-  if (!inner) return;
+  const slides = root.querySelectorAll('.carousel__slide');
 
   let position = 0;
   const slideWidth = inner.offsetWidth;
 
-  nextBtn?.addEventListener('click', () => {
+  const maxPosition = (slides.length - 1) * slideWidth;
+
+  function update() {
+    inner.style.transform = `translateX(-${position}px)`;
+
+    prevBtn.style.display = position === 0 ? 'none' : '';
+    nextBtn.style.display = position >= maxPosition ? 'none' : '';
+  }
+
+  nextBtn.addEventListener('click', () => {
     position += slideWidth;
-
-    inner.style.transform = `translateX(-${position}px)`;
+    update();
   });
 
-  prevBtn?.addEventListener('click', () => {
+  prevBtn.addEventListener('click', () => {
     position -= slideWidth;
-
-    inner.style.transform = `translateX(-${position}px)`;
+    update();
   });
-}
 
-initCarousel();
+  update();
+}

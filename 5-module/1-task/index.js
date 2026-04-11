@@ -1,4 +1,4 @@
-export default function hideSelf() {
+export function hideSelf() {
   const button = document.querySelector('.hide-self-button');
 
   if (!button) return;
@@ -7,5 +7,3 @@ export default function hideSelf() {
     button.style.display = 'none';
   });
 }
-
-hideSelf();
