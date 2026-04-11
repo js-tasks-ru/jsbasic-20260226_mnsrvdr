@@ -1,84 +1,159 @@
 import createElement from '../../assets/lib/create-element.js';
 
-export class Carousel {
+export default class Carousel {
   constructor(slides) {
     this.slides = slides;
-    this.elem = document.createElement('div');
-    this.elem.classList.add('carousel');
-    this.elem.innerHTML = `
-    <div class="carousel__arrow carousel__arrow_right">
-      <img src="/assets/images/icons/angle-icon.svg" alt="icon">
-    </div>
-    <div class="carousel__arrow carousel__arrow_left">
-      <img src="/assets/images/icons/angle-left-icon.svg" alt="icon">
-    </div>
-      <div class="carousel__inner">
-        ${this.slides.map(slide => `
-          <div class="carousel__slide" data-id="${slide.id}">
-            <img src="/assets/images/carousel/${slide.image}" class="carousel__img" alt="slide">
-            <div class="carousel__caption">
-              <span class="carousel__price">€${slide.price.toFixed(2)}</span>
-              <div class="carousel__title">${slide.name}</div>
-              <button type="button" class="carousel__button">
-                <img src="/assets/images/icons/plus-icon.svg" alt="icon">
-              </button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
+    this._currentIndex = 0;
 
-    this.initCarousel();
-    this.add_product();
+    this._onRightArrowClick = this._onRightArrowClick.bind(this);
+    this._onLeftArrowClick = this._onLeftArrowClick.bind(this);
+    this._onRootClick = this._onRootClick.bind(this);
+
+    this.elem = this._render();
+    this._initEventListeners();
+    this._update();
   }
-    
-  initCarousel() {
-    let carouselInner = this.elem.querySelector('.carousel__inner');
-    let leftArrow = this.elem.querySelector('.carousel__arrow.carousel__arrow_left');
-    let rightArrow = this.elem.querySelector('.carousel__arrow.carousel__arrow_right');
-    let currentIndex = 0;
-    let totalSlides = this.slides.length;
-    function updateCarousel() {
-      let slideWidth = carouselInner.offsetWidth;
-      carouselInner.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
-    
-      leftArrow.style.display = (currentIndex === 0) ? 'none' : 'flex';
-      rightArrow.style.display = (currentIndex === totalSlides - 1) ? 'none' : 'flex';
+
+  _render() {
+    const { root, inner } = this._renderRoot();
+
+    this._renderSlides(inner);
+    this._renderArrows(root);
+    root.append(inner);
+
+    return root;
+  }
+
+  _renderRoot() {
+    const root = createElement(`<div class="carousel"></div>`);
+    const inner = createElement(`<div class="carousel__inner"></div>`);
+
+    this._refs = {
+      inner,
+      leftArrow: null,
+      rightArrow: null,
+    };
+    this._slides = [];
+
+    return { root, inner };
+  }
+
+  _renderSlides(inner) {
+    const slidesElements = [];
+
+    for (const slide of this.slides) {
+      const slideEl = this._createSlide(slide);
+      slidesElements.push(slideEl);
+      inner.append(slideEl);
     }
-  
-    leftArrow.addEventListener('click', function() {
-      if (currentIndex > 0) {
-        currentIndex--;
-        updateCarousel();
-      }
-    });
-  
-    rightArrow.addEventListener('click', function() {
-      if (currentIndex < totalSlides - 1) {
-        currentIndex++;
-        updateCarousel();
-      }
-    });
-  
-    updateCarousel();
+
+    this._slides = slidesElements;
   }
 
-add_product() {
-    this.elem.addEventListener('click', (event) => {
-      let button = event.target.closest('.carousel__button');
-      if (button) {
-        let slideElem = event.target.closest('.carousel__slide');
-        
-        let slideId = slideElem.dataset.id;
-        
-        let slide = this.slides.find(s => s.id === slideId);
-        
-        let customEvent = new CustomEvent("product-add", { 
-          detail: slide.id,
-          bubbles: true 
-        });
-        this.elem.dispatchEvent(customEvent);
-      }
+  _renderArrows(root) {
+    const leftArrow = createElement(`
+      <div class="carousel__arrow carousel__arrow_left">
+        <img src="/assets/images/icons/angle-left-icon.svg" alt="icon">
+      </div>
+    `);
+    const rightArrow = createElement(`
+      <div class="carousel__arrow carousel__arrow_right">
+        <img src="/assets/images/icons/angle-icon.svg" alt="icon">
+      </div>
+    `);
+
+    this._refs.leftArrow = leftArrow;
+    this._refs.rightArrow = rightArrow;
+
+    root.append(leftArrow, rightArrow);
+  }
+
+  _createSlide(slide) {
+    const slideEl = createElement(`<div class="carousel__slide"></div>`);
+    slideEl.dataset.id = slide.id;
+
+    const img = createElement(`<img class="carousel__img" alt="slide">`);
+    img.src = `/assets/images/carousel/${slide.image}`;
+
+    const caption = createElement(`<div class="carousel__caption"></div>`);
+    const priceSpan = createElement(`<span class="carousel__price"></span>`);
+    priceSpan.textContent = `€${slide.price.toFixed(2)}`;
+    const titleDiv = createElement(`<div class="carousel__title"></div>`);
+    titleDiv.textContent = slide.name;
+    const button = createElement(`
+      <button type="button" class="carousel__button">
+        <img src="/assets/images/icons/plus-icon.svg" alt="icon">
+      </button>
+    `);
+
+    caption.append(priceSpan, titleDiv, button);
+    slideEl.append(img, caption);
+
+    return slideEl;
+  }
+
+  _initEventListeners() {
+    this._refs.rightArrow.addEventListener('click', this._onRightArrowClick);
+    this._refs.leftArrow.addEventListener('click', this._onLeftArrowClick);
+    this.elem.addEventListener('click', this._onRootClick);
+  }
+
+  _onRightArrowClick() {
+    this._next();
+  }
+
+  _onLeftArrowClick() {
+    this._prev();
+  }
+
+  _onRootClick(event) {
+    const button = event.target.closest('.carousel__button');
+    if (!button) return;
+
+    const slide = button.closest('.carousel__slide');
+    if (!slide) return;
+
+    this._emitProductAdd(slide.dataset.id);
+  }
+
+  _emitProductAdd(slideId) {
+    const productAddEvent = new CustomEvent('product-add', {
+      detail: slideId,
+      bubbles: true
     });
+    this.elem.dispatchEvent(productAddEvent);
+  }
+
+  _next() {
+    this._setIndex(this._currentIndex + 1);
+  }
+
+  _prev() {
+    this._setIndex(this._currentIndex - 1);
+  }
+
+  _setIndex(nextIndex) {
+    const lastIndex = this._slides.length - 1;
+    const clampedIndex = Math.max(0, Math.min(nextIndex, lastIndex));
+    if (clampedIndex === this._currentIndex) return;
+
+    this._currentIndex = clampedIndex;
+    this._update();
+  }
+
+  _update() {
+    this._updatePosition();
+    this._updateArrows();
+  }
+
+  _updatePosition() {
+    const slideWidth = this._slides[0].offsetWidth;
+    const offset = -this._currentIndex * slideWidth;
+    this._refs.inner.style.transform = `translateX(${offset}px)`;
+  }
+
+  _updateArrows() {
+    this._refs.leftArrow.style.display = this._currentIndex === 0 ? 'none' : '';
+    this._refs.rightArrow.style.display = this._currentIndex === this._slides.length - 1 ? 'none' : '';
   }
 }
