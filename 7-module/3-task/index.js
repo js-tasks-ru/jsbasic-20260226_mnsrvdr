@@ -1,159 +1,70 @@
-import createElement from '../../assets/lib/create-element.js';
+export default class StepSlider {
+  constructor({ steps, value = 0 }) {
+    this.steps = steps;
+    this.value = value;
 
-export default class Carousel {
-  constructor(slides) {
-    this.slides = slides;
-    this._currentIndex = 0;
+    this.elem = document.createElement('div');
+    this.elem.className = 'slider';
 
-    this._onRightArrowClick = this._onRightArrowClick.bind(this);
-    this._onLeftArrowClick = this._onLeftArrowClick.bind(this);
-    this._onRootClick = this._onRootClick.bind(this);
-
-    this.elem = this._render();
-    this._initEventListeners();
-    this._update();
-  }
-
-  _render() {
-    const { root, inner } = this._renderRoot();
-
-    this._renderSlides(inner);
-    this._renderArrows(root);
-    root.append(inner);
-
-    return root;
-  }
-
-  _renderRoot() {
-    const root = createElement(`<div class="carousel"></div>`);
-    const inner = createElement(`<div class="carousel__inner"></div>`);
-
-    this._refs = {
-      inner,
-      leftArrow: null,
-      rightArrow: null,
-    };
-    this._slides = [];
-
-    return { root, inner };
-  }
-
-  _renderSlides(inner) {
-    const slidesElements = [];
-
-    for (const slide of this.slides) {
-      const slideEl = this._createSlide(slide);
-      slidesElements.push(slideEl);
-      inner.append(slideEl);
-    }
-
-    this._slides = slidesElements;
-  }
-
-  _renderArrows(root) {
-    const leftArrow = createElement(`
-      <div class="carousel__arrow carousel__arrow_left">
-        <img src="/assets/images/icons/angle-left-icon.svg" alt="icon">
+    this.elem.innerHTML = `
+      <div class="slider__thumb">
+        <span class="slider__value">${this.value}</span>
       </div>
-    `);
-    const rightArrow = createElement(`
-      <div class="carousel__arrow carousel__arrow_right">
-        <img src="/assets/images/icons/angle-icon.svg" alt="icon">
+      <div class="slider__progress"></div>
+      <div class="slider__steps">
+        ${'<span></span>'.repeat(this.steps)}
       </div>
-    `);
+    `;
 
-    this._refs.leftArrow = leftArrow;
-    this._refs.rightArrow = rightArrow;
+    this.thumb = this.elem.querySelector('.slider__thumb');
+    this.progress = this.elem.querySelector('.slider__progress');
+    this.valueElem = this.elem.querySelector('.slider__value');
+    this.stepsContainer = this.elem.querySelector('.slider__steps');
 
-    root.append(leftArrow, rightArrow);
-  }
+    this.stepsContainer.children[this.value].classList.add('slider__step-active');
 
-  _createSlide(slide) {
-    const slideEl = createElement(`<div class="carousel__slide"></div>`);
-    slideEl.dataset.id = slide.id;
+    this.updateUI(this.value);
 
-    const img = createElement(`<img class="carousel__img" alt="slide">`);
-    img.src = `/assets/images/carousel/${slide.image}`;
-
-    const caption = createElement(`<div class="carousel__caption"></div>`);
-    const priceSpan = createElement(`<span class="carousel__price"></span>`);
-    priceSpan.textContent = `€${slide.price.toFixed(2)}`;
-    const titleDiv = createElement(`<div class="carousel__title"></div>`);
-    titleDiv.textContent = slide.name;
-    const button = createElement(`
-      <button type="button" class="carousel__button">
-        <img src="/assets/images/icons/plus-icon.svg" alt="icon">
-      </button>
-    `);
-
-    caption.append(priceSpan, titleDiv, button);
-    slideEl.append(img, caption);
-
-    return slideEl;
-  }
-
-  _initEventListeners() {
-    this._refs.rightArrow.addEventListener('click', this._onRightArrowClick);
-    this._refs.leftArrow.addEventListener('click', this._onLeftArrowClick);
-    this.elem.addEventListener('click', this._onRootClick);
-  }
-
-  _onRightArrowClick() {
-    this._next();
-  }
-
-  _onLeftArrowClick() {
-    this._prev();
-  }
-
-  _onRootClick(event) {
-    const button = event.target.closest('.carousel__button');
-    if (!button) return;
-
-    const slide = button.closest('.carousel__slide');
-    if (!slide) return;
-
-    this._emitProductAdd(slide.dataset.id);
-  }
-
-  _emitProductAdd(slideId) {
-    const productAddEvent = new CustomEvent('product-add', {
-      detail: slideId,
-      bubbles: true
+    this.elem.addEventListener('click', (event) => {
+      this.onClick(event);
     });
-    this.elem.dispatchEvent(productAddEvent);
   }
 
-  _next() {
-    this._setIndex(this._currentIndex + 1);
+  onClick(event) {
+    const rect = this.elem.getBoundingClientRect();
+
+    let left = event.clientX - rect.left;
+
+    let leftRelative = left / this.elem.offsetWidth;
+
+    let segments = this.steps - 1;
+
+    let approximateValue = leftRelative * segments;
+
+    let value = Math.round(approximateValue);
+
+    this.value = value;
+
+    this.updateUI(value);
+
+    this.elem.dispatchEvent(new CustomEvent('slider-change', {
+      detail: this.value,
+      bubbles: true
+    }));
   }
 
-  _prev() {
-    this._setIndex(this._currentIndex - 1);
-  }
+  updateUI(value) {
+    let segments = this.steps - 1;
 
-  _setIndex(nextIndex) {
-    const lastIndex = this._slides.length - 1;
-    const clampedIndex = Math.max(0, Math.min(nextIndex, lastIndex));
-    if (clampedIndex === this._currentIndex) return;
+    let valuePercents = value / segments * 100;
 
-    this._currentIndex = clampedIndex;
-    this._update();
-  }
+    this.thumb.style.left = `${valuePercents}%`;
+    this.progress.style.width = `${valuePercents}%`;
 
-  _update() {
-    this._updatePosition();
-    this._updateArrows();
-  }
+    this.valueElem.textContent = value;
 
-  _updatePosition() {
-    const slideWidth = this._slides[0].offsetWidth;
-    const offset = -this._currentIndex * slideWidth;
-    this._refs.inner.style.transform = `translateX(${offset}px)`;
-  }
+    this.stepsContainer.querySelector('.slider__step-active')?.classList.remove('slider__step-active');
 
-  _updateArrows() {
-    this._refs.leftArrow.style.display = this._currentIndex === 0 ? 'none' : '';
-    this._refs.rightArrow.style.display = this._currentIndex === this._slides.length - 1 ? 'none' : '';
+    this.stepsContainer.children[value].classList.add('slider__step-active');
   }
 }
