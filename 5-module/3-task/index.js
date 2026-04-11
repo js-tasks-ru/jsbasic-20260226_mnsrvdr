@@ -1,35 +1,56 @@
-export function initCarousel() {
-  const root = document.querySelector('.carousel');
-
-  if (!root) return;
-
-  const nextBtn = root.querySelector('.carousel__arrow_right');
-  const prevBtn = root.querySelector('.carousel__arrow_left');
-  const inner = root.querySelector('.carousel__inner');
-
-  const slides = root.querySelectorAll('.carousel__slide');
-
-  let position = 0;
-  const slideWidth = inner.offsetWidth;
-
-  const maxPosition = (slides.length - 1) * slideWidth;
-
-  function update() {
-    inner.style.transform = `translateX(-${position}px)`;
-
-    prevBtn.style.display = position === 0 ? 'none' : '';
-    nextBtn.style.display = position >= maxPosition ? 'none' : '';
+function initCarousel() {
+  const carousel = document.querySelector(".carousel");
+  if (!carousel) {
+    console.warn("Carousel container not found");
+    return;
   }
 
-  nextBtn.addEventListener('click', () => {
-    position += slideWidth;
-    update();
-  });
+  const carouselInner = carousel.querySelector(".carousel__inner");
+  if (!carouselInner) {
+    console.warn("Carousel inner element not found");
+    return;
+  }
 
-  prevBtn.addEventListener('click', () => {
-    position -= slideWidth;
-    update();
-  });
+  const slides = carousel.querySelectorAll(".carousel__slide");
+  if (slides.length === 0) {
+    console.warn("No slides found");
+    return;
+  }
 
-  update();
+  const arrowLeft = carousel.querySelector(".carousel__arrow_left");
+  const arrowRight = carousel.querySelector(".carousel__arrow_right");
+  if (!arrowLeft || !arrowRight) {
+    console.warn("Arrow buttons not found");
+    return;
+  }
+
+  let indexSlide = 0;
+
+  function render() {
+    updateCarousel();
+    updateArrows();
+  }
+
+  function updateCarousel() {
+    const slideWidth = slides[0].offsetWidth;
+    const offset = -indexSlide * slideWidth;
+    carouselInner.style.transform = `translateX(${offset}px)`;
+  }
+
+  arrowRight.onclick = () => {
+    if (indexSlide < slides.length - 1) indexSlide++;
+    render();
+  };
+
+  arrowLeft.onclick = () => {
+    if (indexSlide > 0) indexSlide--;
+    render();
+  };
+
+  function updateArrows() {
+    arrowLeft.style.display = indexSlide === 0 ? "none" : "";
+    arrowRight.style.display = indexSlide === slides.length - 1 ? "none" : "";
+  }
+
+  render();
 }
