@@ -1,47 +1,47 @@
-class UserTable {
+export default class UserTable {
   constructor(rows) {
     this.elem = document.createElement('table');
 
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    ['Имя', 'Возраст', 'Зарплата', 'Город', ''].forEach(text => {
+    const headers = ['Имя', 'Возраст', 'Зарплата', 'Город', ''];
+    const columns = ['name', 'age', 'salary', 'city'];
+    
+    for (const headerText of headers) {
       const th = document.createElement('th');
-      th.textContent = text;
+      th.textContent = headerText;
       headerRow.appendChild(th);
-    });
+    }
     thead.appendChild(headerRow);
     this.elem.appendChild(thead);
 
     const tbody = document.createElement('tbody');
-    this.elem.appendChild(tbody);
 
-    rows.forEach(row => {
-      const tr = document.createElement('tr');
+    tbody.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-action="remove"]');
+      if (!button || !tbody.contains(button)) return;
 
-      Object.values(row).forEach(value => {
-        const td = document.createElement('td');
-        td.textContent = value;
-        tr.appendChild(td);
-      });
-
-      const tdButton = document.createElement('td');
-      const btn = document.createElement('button');
-      btn.textContent = 'X';
-      btn.addEventListener('click', () => tr.remove());
-      tdButton.appendChild(btn);
-      tr.appendChild(tdButton);
-
-      tbody.appendChild(tr);
+      const row = button.closest('tr');
+      if (row) row.remove();
     });
+
+    for (const person of rows) {
+      const row = document.createElement('tr');
+
+      for (const column of columns) {
+        const cell = document.createElement('td');
+        cell.textContent = person[column];
+        row.appendChild(cell);
+      }
+
+      const buttonCell = document.createElement('td');
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'X';
+      deleteButton.dataset.action = 'remove';
+      buttonCell.appendChild(deleteButton);
+      row.appendChild(buttonCell);
+      tbody.appendChild(row);
+    }
+    this.elem.appendChild(tbody);
   }
 }
-
-let rows = [
-  { name: 'Ilia', age: 25, salary: 1000, city: 'Petrozavodsk' },
-  { name: 'Vasya', age: 14, salary: 1500, city: 'Moscow' },
-  { name: 'Ivan', age: 22, salary: 100, city: 'Bryansk' },
-  { name: 'Petya', age: 45, salary: 990, city: 'Chita' }
-];
-
-let table = new UserTable(rows);
-document.body.appendChild(table.elem);
