@@ -1,6 +1,6 @@
 import createElement from '../../assets/lib/create-element.js';
 
-export default class Modal {
+export class Modal {
   constructor() {
     this.render();
     this.canсelEvents();

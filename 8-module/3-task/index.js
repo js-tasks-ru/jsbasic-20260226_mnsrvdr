@@ -1,4 +1,4 @@
-export default class Cart {
+export class Cart {
   cartItems = [];
 
   constructor(cartIcon) {

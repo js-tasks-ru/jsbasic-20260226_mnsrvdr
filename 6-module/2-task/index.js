@@ -1,4 +1,4 @@
-export default class ProductCard {
+export class ProductCard {
   constructor(product) {
     this.product = product;
     this.elem = document.createElement('div');
