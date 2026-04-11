@@ -3,7 +3,7 @@ import escapeHtml from '../../assets/lib/escape-html.js';
 
 import Modal from '../../7-module/2-task/index.js';
 
-export class Cart {
+export default class Cart {
   cartItems = [];
 
   constructor(cartIcon) {

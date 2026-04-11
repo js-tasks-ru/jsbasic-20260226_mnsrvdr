@@ -15,12 +15,12 @@ export class ProductCard {
         </button>
       </div>
     `;
-    
-    this.elem.addEventListener('click', (event)=> {
+
+    this.elem.addEventListener('click', (event) => {
       if (event.target.closest('.card__button')) {
-        let customEvent = new CustomEvent("product-add", { 
-          detail: this.product.id,     
-          bubbles: true 
+        let customEvent = new CustomEvent("product-add", {
+          detail: { id: this.product.id },
+          bubbles: true
         });
         this.elem.dispatchEvent(customEvent);
       }

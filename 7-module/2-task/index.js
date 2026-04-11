@@ -1,9 +1,9 @@
 import createElement from '../../assets/lib/create-element.js';
 
-export class Modal {
+export default class Modal {
   constructor() {
     this.render();
-    this.canсelEvents();
+    this.cancelEvents();
   }
 
   render() {
@@ -23,7 +23,7 @@ export class Modal {
     `);
   }
 
-  canсelEvents() {
+  cancelEvents() {
     this.elem.querySelector('.modal__close').addEventListener('click', () => {
       this.close();
     });

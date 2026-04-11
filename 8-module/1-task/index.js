@@ -1,6 +1,6 @@
 import createElement from '../../assets/lib/create-element.js';
 
-export class CartIcon {
+export default class CartIcon {
   constructor() {
     this.render();
 
