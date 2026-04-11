@@ -1,7 +1,10 @@
-function hideSelf() {
+export default function hideSelf() {
   const button = document.querySelector('.hide-self-button');
+
+  if (!button) return;
+
   button.addEventListener('click', () => {
-    button.hidden = true;
+    button.style.display = 'none';
   });
 }
 
