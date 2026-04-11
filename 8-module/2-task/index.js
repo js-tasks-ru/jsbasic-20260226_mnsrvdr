@@ -1,3 +1,6 @@
+import createElement from '../../assets/lib/create-element.js';
+import ProductCard from './product-card.js';
+
 export default class ProductGrid {
   constructor(products) {
     this.products = products;
@@ -22,7 +25,7 @@ export default class ProductGrid {
 
     const filteredProducts = this.getFilteredProducts();
 
-    for (let product of filteredProducts) {
+    for (const product of filteredProducts) {
       const productCard = new ProductCard(product);
       this.innerElem.append(productCard.elem);
     }
@@ -30,27 +33,27 @@ export default class ProductGrid {
 
   getFilteredProducts() {
     return this.products.filter(product => {
-      // noNuts
-      if (this.filters.noNuts) {
-        if (product.nuts === true) return false;
+      const f = this.filters;
+
+      if (f.noNuts && product.nuts === true) {
+        return false;
       }
 
-      // vegeterianOnly
-      if (this.filters.vegeterianOnly) {
-        if (!product.vegeterian) return false;
+      if (f.vegeterianOnly && product.vegeterian !== true) {
+        return false;
       }
 
-      // maxSpiciness
       if (
-        typeof this.filters.maxSpiciness === 'number' &&
-        product.spiciness > this.filters.maxSpiciness
+        typeof f.maxSpiciness === 'number' &&
+        product.spiciness > f.maxSpiciness
       ) {
         return false;
       }
 
-      // category
-      if (this.filters.category) {
-        if (product.category !== this.filters.category) return false;
+      if (f.category && f.category !== '') {
+        if (product.category !== f.category) {
+          return false;
+        }
       }
 
       return true;
